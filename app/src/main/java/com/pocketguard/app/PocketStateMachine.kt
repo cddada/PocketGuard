@@ -21,6 +21,8 @@ data class PocketSensors(
     val isStill: Boolean = true,
     val motionMagnitude: Float = 0f,
     val isFlatFaceDown: Boolean = false,
+    /** A landscape device is much more likely to be in active use, such as gaming. */
+    val isLandscape: Boolean = false,
     val touchDetected: Boolean = false
 ) {
     companion object {
@@ -38,7 +40,10 @@ class PocketStateMachine(
 
     companion object {
         private const val WAKE_ENTRY_DELAY_MS = 300L
-        private const val ACTIVE_ENTRY_DELAY_MS = 600L
+        // Keep the active-screen confirmation deliberately longer than a wake-up
+        // confirmation. This avoids treating a hand briefly covering the top
+        // sensor during landscape gaming as a pocket insertion.
+        private const val ACTIVE_ENTRY_DELAY_MS = 1_000L
         private const val WAKE_CONTEXT_WINDOW_MS = 1_000L
         private const val RECENT_MOTION_WINDOW_MS = 1_800L
         private const val RECENT_DARK_DROP_WINDOW_MS = 1_800L
@@ -50,6 +55,9 @@ class PocketStateMachine(
 
     var state: PocketState = PocketState.NORMAL
         private set
+
+    val probeConfirmationDelayMs: Long
+        get() = if (candidateStartedAfterWake) WAKE_ENTRY_DELAY_MS else ACTIVE_ENTRY_DELAY_MS
 
     private var screenInteractive = false
     private var screenOnTime = Long.MIN_VALUE
@@ -104,7 +112,7 @@ class PocketStateMachine(
             return
         }
 
-        if (suppressedUntilProximityClears || sensors.isFlatFaceDown) return
+        if (suppressedUntilProximityClears || sensors.isFlatFaceDown || sensors.isLandscape) return
 
         probingStartTime = now
         candidateStartedAfterWake = elapsedSince(screenOnTime, now) <= WAKE_CONTEXT_WINDOW_MS
@@ -117,7 +125,7 @@ class PocketStateMachine(
             return
         }
 
-        if (sensors.isFlatFaceDown) {
+        if (sensors.isFlatFaceDown || sensors.isLandscape) {
             rejectCandidateUntilClear()
             return
         }

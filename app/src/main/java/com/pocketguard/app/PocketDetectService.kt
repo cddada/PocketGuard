@@ -7,6 +7,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.IBinder
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
@@ -60,6 +62,15 @@ class PocketDetectService : Service() {
     private lateinit var touchOverlay: TouchOverlay
     private var latestSensors = PocketSensors()
     private var screenReceiverRegistered = false
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val probeConfirmation = Runnable {
+        if (stateMachine.state == PocketState.PROBING) {
+            // Proximity and light sensors often report only one on-change event.
+            // Recheck the latest snapshot so protection does not depend on a
+            // second callback after the confirmation interval.
+            stateMachine.processSensors(latestSensors)
+        }
+    }
 
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -93,8 +104,10 @@ class PocketDetectService : Service() {
                 PocketState.LOCK_SCREEN -> {
                     touchOverlay.disable()
                 }
-                PocketState.PROBING -> Unit
+                PocketState.PROBING -> scheduleProbeConfirmation()
             }
+
+            if (state != PocketState.PROBING) cancelProbeConfirmation()
         }
 
         sensorMonitor.onSensorUpdate = { sensors ->
@@ -137,6 +150,7 @@ class PocketDetectService : Service() {
     }
 
     override fun onDestroy() {
+        cancelProbeConfirmation()
         sensorMonitor.stop()
         touchOverlay.disable()
         if (screenReceiverRegistered) {
@@ -147,15 +161,26 @@ class PocketDetectService : Service() {
     }
 
     private fun handleScreenTurnedOn(treatAsActualWake: Boolean) {
+        cancelProbeConfirmation()
         latestSensors = PocketSensors()
         stateMachine.onScreenTurnedOn(treatAsActualWake)
         sensorMonitor.start()
     }
 
     private fun handleScreenTurnedOff() {
+        cancelProbeConfirmation()
         stateMachine.onScreenTurnedOff()
         sensorMonitor.stop()
         latestSensors = PocketSensors()
+    }
+
+    private fun scheduleProbeConfirmation() {
+        mainHandler.removeCallbacks(probeConfirmation)
+        mainHandler.postDelayed(probeConfirmation, stateMachine.probeConfirmationDelayMs)
+    }
+
+    private fun cancelProbeConfirmation() {
+        mainHandler.removeCallbacks(probeConfirmation)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

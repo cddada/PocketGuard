@@ -47,7 +47,7 @@ class PocketStateMachineTest {
             PocketState.PROBING,
             machine.processSensors(sensors(near = true, lux = 2f))
         )
-        advanceTo(3_901L)
+        advanceTo(4_301L)
         assertEquals(
             PocketState.POCKETED,
             machine.processSensors(sensors(near = true, lux = 2f))
@@ -65,7 +65,7 @@ class PocketStateMachineTest {
         machine.processSensors(sensors(near = false, lux = 50f))
         advanceTo(3_300L)
         machine.processSensors(sensors(near = true, lux = 50f))
-        advanceTo(3_901L)
+        advanceTo(4_301L)
 
         assertEquals(
             PocketState.POCKETED,
@@ -87,6 +87,20 @@ class PocketStateMachineTest {
             machine.processSensors(
                 sensors(near = true, lux = 1f, faceDown = true)
             )
+        )
+    }
+
+    @Test
+    fun `landscape gaming posture does not enable protection`() {
+        val machine = createActiveBrightMachine()
+        advanceTo(3_100L)
+        machine.processSensors(sensors(near = false, lux = 100f, motion = 1.2f))
+        advanceTo(3_200L)
+        machine.processSensors(sensors(near = false, lux = 1f))
+
+        assertEquals(
+            PocketState.NORMAL,
+            machine.processSensors(sensors(near = true, lux = 1f, landscape = true))
         )
     }
 
@@ -183,13 +197,15 @@ class PocketStateMachineTest {
         near: Boolean,
         lux: Float,
         motion: Float = 0f,
-        faceDown: Boolean = false
+        faceDown: Boolean = false,
+        landscape: Boolean = false
     ) = PocketSensors(
         proximityBlocked = near,
         lightLux = lux,
         isStill = motion < PocketSensors.MOTION_THRESHOLD,
         motionMagnitude = motion,
-        isFlatFaceDown = faceDown
+        isFlatFaceDown = faceDown,
+        isLandscape = landscape
     )
 
     private fun advanceTo(time: Long) {

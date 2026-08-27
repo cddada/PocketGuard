@@ -5,6 +5,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import kotlin.math.abs
 import kotlin.math.sqrt
 
 class SensorMonitor(context: Context) : SensorEventListener {
@@ -20,6 +21,7 @@ class SensorMonitor(context: Context) : SensorEventListener {
     private var isStill = true
     private var motionMagnitude = 0f
     private var isFlatFaceDown = false
+    private var isLandscape = false
     private var started = false
 
     private val gravity = FloatArray(3)
@@ -52,6 +54,7 @@ class SensorMonitor(context: Context) : SensorEventListener {
         isStill = true
         motionMagnitude = 0f
         isFlatFaceDown = false
+        isLandscape = false
     }
 
     override fun onSensorChanged(event: SensorEvent) {
@@ -108,6 +111,10 @@ class SensorMonitor(context: Context) : SensorEventListener {
                 gravity[2] * gravity[2]
         )
         isFlatFaceDown = gravityMagnitude > 7f && gravity[2] / gravityMagnitude < -0.85f
+        // In Android's natural portrait coordinates, X dominates when the
+        // device is held landscape. Pocket insertion is normally portrait;
+        // excluding landscape avoids blocking two-handed games.
+        isLandscape = gravityMagnitude > 7f && abs(gravity[0]) > abs(gravity[1])
     }
 
     private fun emitUpdate() {
@@ -118,6 +125,7 @@ class SensorMonitor(context: Context) : SensorEventListener {
                 isStill = isStill,
                 motionMagnitude = motionMagnitude,
                 isFlatFaceDown = isFlatFaceDown,
+                isLandscape = isLandscape,
                 touchDetected = false
             )
         )
