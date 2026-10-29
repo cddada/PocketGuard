@@ -5,7 +5,6 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import kotlin.math.abs
 import kotlin.math.sqrt
 
 class SensorMonitor(context: Context) : SensorEventListener {
@@ -18,11 +17,7 @@ class SensorMonitor(context: Context) : SensorEventListener {
 
     private var proximityBlocked = false
     private var lightLux = Float.MAX_VALUE
-    private var isStill = true
-    private var motionMagnitude = 0f
-    private var isFlatFaceDown = false
-    private var isLandscape = false
-    private var started = false
+    private var isStill = false
 
     private val gravity = FloatArray(3)
     private val linearAccel = FloatArray(3)
@@ -31,8 +26,6 @@ class SensorMonitor(context: Context) : SensorEventListener {
     var onSensorUpdate: ((PocketSensors) -> Unit)? = null
 
     fun start() {
-        if (started) return
-        started = true
         proximitySensor?.let {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
@@ -45,16 +38,8 @@ class SensorMonitor(context: Context) : SensorEventListener {
     }
 
     fun stop() {
-        if (!started) return
         sensorManager.unregisterListener(this)
-        started = false
         gravityInitialized = false
-        proximityBlocked = false
-        lightLux = Float.MAX_VALUE
-        isStill = true
-        motionMagnitude = 0f
-        isFlatFaceDown = false
-        isLandscape = false
     }
 
     override fun onSensorChanged(event: SensorEvent) {
@@ -83,8 +68,6 @@ class SensorMonitor(context: Context) : SensorEventListener {
         if (!gravityInitialized) {
             System.arraycopy(values, 0, gravity, 0, 3)
             gravityInitialized = true
-            updateOrientation()
-            emitUpdate()
             return
         }
 
@@ -93,28 +76,14 @@ class SensorMonitor(context: Context) : SensorEventListener {
             linearAccel[i] = values[i] - gravity[i]
         }
 
-        motionMagnitude = sqrt(
+        val magnitude = sqrt(
             linearAccel[0] * linearAccel[0] +
             linearAccel[1] * linearAccel[1] +
             linearAccel[2] * linearAccel[2]
         )
 
-        isStill = motionMagnitude < PocketSensors.MOTION_THRESHOLD
-        updateOrientation()
+        isStill = magnitude < PocketSensors.STILL_THRESHOLD
         emitUpdate()
-    }
-
-    private fun updateOrientation() {
-        val gravityMagnitude = sqrt(
-            gravity[0] * gravity[0] +
-                gravity[1] * gravity[1] +
-                gravity[2] * gravity[2]
-        )
-        isFlatFaceDown = gravityMagnitude > 7f && gravity[2] / gravityMagnitude < -0.85f
-        // In Android's natural portrait coordinates, X dominates when the
-        // device is held landscape. Pocket insertion is normally portrait;
-        // excluding landscape avoids blocking two-handed games.
-        isLandscape = gravityMagnitude > 7f && abs(gravity[0]) > abs(gravity[1])
     }
 
     private fun emitUpdate() {
@@ -123,9 +92,6 @@ class SensorMonitor(context: Context) : SensorEventListener {
                 proximityBlocked = proximityBlocked,
                 lightLux = lightLux,
                 isStill = isStill,
-                motionMagnitude = motionMagnitude,
-                isFlatFaceDown = isFlatFaceDown,
-                isLandscape = isLandscape,
                 touchDetected = false
             )
         )

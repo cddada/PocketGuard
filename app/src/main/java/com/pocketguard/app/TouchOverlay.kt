@@ -17,11 +17,11 @@ class TouchOverlay(private val context: Context) {
 
     var onTouchDetected: (() -> Unit)? = null
 
-    fun enable() {
-        if (isActive) return
+    fun enable(): Boolean {
+        if (isActive) return true
         if (!Settings.canDrawOverlays(context)) {
             Log.w(TAG, "Overlay permission is not available")
-            return
+            return false
         }
 
         windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -31,6 +31,7 @@ class TouchOverlay(private val context: Context) {
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                     or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         ).apply {
@@ -51,8 +52,11 @@ class TouchOverlay(private val context: Context) {
         try {
             windowManager?.addView(overlayView, params)
             isActive = true
+            return true
         } catch (e: Exception) {
             Log.e(TAG, "Unable to add touch overlay", e)
+            overlayView = null
+            return false
         }
     }
 

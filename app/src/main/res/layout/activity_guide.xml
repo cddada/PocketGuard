@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/page_root"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:fillViewport="true" android:background="@color/background">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="24dp">
+        <Button android:id="@+id/btn_back" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="返回" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="检测与使用说明" android:textSize="24sp" android:textStyle="bold"
+            android:textColor="@color/primary" android:layout_marginTop="12dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="检测状态" android:textSize="17sp" android:textStyle="bold"
+            android:layout_marginTop="24dp" />
+        <TextView android:id="@+id/tv_detection" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="已停止" android:textSize="15sp"
+            android:layout_marginTop="8dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="持续遮挡时间" android:textSize="17sp" android:textStyle="bold"
+            android:layout_marginTop="24dp" />
+        <RadioGroup android:id="@+id/delay_group" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:orientation="horizontal">
+            <RadioButton android:id="@+id/delay_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="2 秒" />
+            <RadioButton android:id="@+id/delay_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="3 秒" />
+            <RadioButton android:id="@+id/delay_5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="5 秒" />
+        </RadioGroup>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="权限与后台运行" android:textSize="17sp" android:textStyle="bold"
+            android:layout_marginTop="24dp" />
+        <TextView android:id="@+id/tv_permissions" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:textSize="15sp" android:lineSpacingExtra="7dp"
+            android:layout_marginTop="8dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="√ 表示已满足；× 表示需要设置。厂商后台策略需手动检查。"
+            android:textSize="13sp" android:textColor="@color/text_secondary" android:layout_marginTop="8dp" />
+        <Button android:id="@+id/btn_app_settings" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="应用设置" />
+        <Button android:id="@+id/btn_battery_settings" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="电池优化设置" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="使用说明" android:textSize="17sp" android:textStyle="bold"
+            android:layout_marginTop="20dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="竖屏时持续遮住手机顶部的距离传感器，达到设定时间后触碰屏幕即可锁屏。移开遮挡会取消检测，横屏时暂停。\n\n锁屏后需先移开遮挡才能开始下一轮检测；解锁时可能需要密码、PIN 或图案。\n\n请允许 PocketGuard 不受电池优化限制。小米手机还可在应用设置中将省电策略设为“无限制”，并开启自启动。不同手机的设置名称可能不同。"
+            android:textSize="14sp" android:textColor="@color/text_secondary"
+            android:layout_marginTop="8dp" android:lineSpacingExtra="4dp" />
+    </LinearLayout>
+</ScrollView>

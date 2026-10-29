@@ -9,7 +9,11 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
             if (PocketDetectService.isEnabled(context)) {
-                PocketDetectService.start(context)
+                try {
+                    PocketDetectService.start(context)
+                } catch (e: RuntimeException) {
+                    PocketDetectService.stop(context)
+                }
             }
         }
     }
